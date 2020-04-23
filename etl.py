@@ -22,6 +22,35 @@ def create_spark_session():
 
 
 def process_song_data(spark, input_data, output_data, write_data):
+    """
+    Description:
+      Read data from te input directory that contains *.json files with song
+      data. Use spark to process the data, create tables, and query data using
+      spark sql. Write data to parquet files for songs and artists.
+
+    Parameters:
+      spark - spark session object
+      input_data - location to read song data files
+      output_data - location to write output data
+      write_data - 0/1 integer to read or read + write data
+
+    Returns:
+      none
+
+    Sample song data entry:
+    {
+      "num_songs": 1,
+      "artist_id": "ARMJAGH1187FB546F3",
+      "artist_latitude": 35.14968,
+      "artist_longitude": -90.04892,
+      "artist_location": "Memphis, TN",
+      "artist_name": "The Box Tops",
+      "song_id": "SOCIWDW12A8C13D406",
+      "title": "Soul Deep",
+      "duration": 148.03546,
+      "year": 1969
+    }
+    """
     # get filepath to song data file
     song_data = input_data + 'song_data/*/*/*/*.json'
 
@@ -70,29 +99,68 @@ def process_song_data(spark, input_data, output_data, write_data):
 
 
 def process_log_data(spark, input_data, output_data, write_data):
+    """
+    Description:
+      Read data from the input directory that contains *.json files with log
+      data. Use spark to process the data, create tables, and query data using
+      spark sql. Write data to parquet files for users, singplays, and time
+      tables.
+
+    Parameters:
+      spark - spark session object
+      input_data - location to read log data files
+      output_data - location to write output data
+      write_data - 0/1 integer to read or read + write data
+
+    Returns:
+      none
+
+    Sample log data entry:
+      {
+        "artist": "Des'ree",
+        "auth": "Logged In",
+        "firstName": "Kaylee",
+        "gender": "F",
+        "itemInSession": 1,
+        "lastName": "Summers",
+        "length": 246.30812,
+        "level": "free",
+        "location": "Phoenix-Mesa-Scottsdale, AZ",
+        "method": "PUT",
+        "page": "NextSong",
+        "registration": 1540344794796.0,
+        "sessionId": 139,
+        "song": "You Gotta Be",
+        "status": 200,
+        "ts": 1541106106796,
+        "userAgent": "\"Mozilla\/5.0 (Windows NT 6.1; WOW64) AppleWebKit\/537.36
+            (KHTML, like Gecko) Chrome\/35.0.1916.153 Safari\/537.36\"",
+        "userId": "8"
+      }
+
+    Sample schema:
+      |-- artist: string (nullable = true)
+      |-- auth: string (nullable = true)
+      |-- firstName: string (nullable = true)
+      |-- gender: string (nullable = true)
+      |-- itemInSession: long (nullable = true)
+      |-- lastName: string (nullable = true)
+      |-- length: double (nullable = true)
+      |-- level: string (nullable = true)
+      |-- location: string (nullable = true)
+      |-- method: string (nullable = true)
+      |-- page: string (nullable = true)
+      |-- registration: double (nullable = true)
+      |-- sessionId: long (nullable = true)
+      |-- song: string (nullable = true)
+      |-- status: long (nullable = true)
+      |-- ts: long (nullable = true)
+      |-- userAgent: string (nullable = true)
+      |-- userId: string (nullable = true)
+    """
+
     # get filepath to log data file
     log_data = input_data + "log_data/*/*/*.json"
-
-    """
-    |-- artist: string (nullable = true)
-    |-- auth: string (nullable = true)
-    |-- firstName: string (nullable = true)
-    |-- gender: string (nullable = true)
-    |-- itemInSession: long (nullable = true)
-    |-- lastName: string (nullable = true)
-    |-- length: double (nullable = true)
-    |-- level: string (nullable = true)
-    |-- location: string (nullable = true)
-    |-- method: string (nullable = true)
-    |-- page: string (nullable = true)
-    |-- registration: double (nullable = true)
-    |-- sessionId: long (nullable = true)
-    |-- song: string (nullable = true)
-    |-- status: long (nullable = true)
-    |-- ts: long (nullable = true)
-    |-- userAgent: string (nullable = true)
-    |-- userId: string (nullable = true)
-    """
 
     log_json_schema = StructType([
         StructField("artist", StringType()),
@@ -194,7 +262,7 @@ def process_log_data(spark, input_data, output_data, write_data):
         from log_data_table ld
         left join song_data_table sd on ld.song = sd.title
     ''')
-    songplays_table.show(10000)
+    songplays_table.show(5)
 
     # write songplays table to parquet files partitioned by year and month
     if write_data == 1:
@@ -206,9 +274,7 @@ def main():
     write_data = 1
     spark = create_spark_session()
     input_data = "s3a://udacity-dend/"
-    #input_data = "./large_data/"
     output_data = "s3a://ma2516-us-west-2/"
-    #output_data = "./output/"
 
     process_song_data(spark, input_data, output_data, write_data)
     process_log_data(spark, input_data, output_data, write_data)
