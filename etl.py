@@ -23,8 +23,7 @@ def create_spark_session():
 
 def process_song_data(spark, input_data, output_data, write_data):
     # get filepath to song data file
-    #song_data = input_data + 'song_data/*/*/*/*.json'
-    song_data = input_data + 'song_data/A/A/*/*.json'
+    song_data = input_data + 'song_data/*/*/*/*.json'
 
     song_json_schema = StructType([
         StructField("num_songs", IntegerType(), True),
@@ -38,7 +37,7 @@ def process_song_data(spark, input_data, output_data, write_data):
         StructField("duration", DoubleType(), True),
         StructField("year", IntegerType(), True)
     ])
-    
+
     # read song data file
     df = spark.read.json(song_data, schema=song_json_schema)
     df.show(5)
@@ -46,14 +45,14 @@ def process_song_data(spark, input_data, output_data, write_data):
 
     # create a view with the raw song data to use SQL to select columns
     df.createOrReplaceTempView("song_data_table")
-    
+
     # extract columns to create songs table
     songs_table = spark.sql('''
         select song_id, title, artist_id, year, duration
         from song_data_table
     ''')
     songs_table.show()
-    
+
     # write songs table to parquet files partitioned by year and artist
     if write_data == 1:
         songs_table.write.mode("overwrite").partitionBy("year", "artist_id").parquet(output_data + "songs_table")
@@ -62,9 +61,9 @@ def process_song_data(spark, input_data, output_data, write_data):
     artists_table = spark.sql('''
         select artist_id, artist_name, artist_location, artist_latitude, artist_longitude
         from song_data_table
-    ''')        
+    ''')
     artists_table.show()
-    
+
     # write artists table to parquet files
     if write_data == 1:
         artists_table.write.mode("overwrite").parquet(output_data + "artists_table")
@@ -121,7 +120,7 @@ def process_log_data(spark, input_data, output_data, write_data):
     #df = spark.read.json(log_data)
     df.show(5)
     df.printSchema()
-    
+
     # rename some column names
     df2 = df.withColumnRenamed("firstName", "first_name") \
             .withColumnRenamed("itemInSession","item_in_session") \
@@ -130,7 +129,7 @@ def process_log_data(spark, input_data, output_data, write_data):
             .withColumnRenamed("userAgent","user_agent") \
             .withColumnRenamed("userId","user_id")
     df2.printSchema()
-        
+
     # filter by actions for song plays
     df2 = df2.filter(df2.page == 'NextSong')
     df2.show(5)
@@ -139,17 +138,17 @@ def process_log_data(spark, input_data, output_data, write_data):
     get_dt = udf(lambda x: datetime.fromtimestamp(x/1000).replace(microsecond=0),TimestampType())
     df2 = df2.withColumn("start_time", get_dt("ts"))
     df2.show(5)
-    
+
     # create a view with the raw songs data to use SQL to select columns
     df2.createOrReplaceTempView("log_data_table")
-    
-    # extract columns for users table    
+
+    # extract columns for users table
     users_table = spark.sql('''
         select distinct(user_id), first_name, last_name, gender, level
         from log_data_table
     ''')
     users_table.show(5)
-    
+
     # write users table to parquet files
     if write_data == 1:
         users_table.write.mode("overwrite").parquet(output_data + "users_table")
@@ -167,7 +166,7 @@ def process_log_data(spark, input_data, output_data, write_data):
         from log_data_table
     ''')
     time_table.show(5)
-    
+
     # write time table to parquet files partitioned by year and month
     if write_data == 1:
         time_table.write.mode("overwrite").partitionBy("year", "month").parquet(output_data + "time_table")
@@ -175,10 +174,10 @@ def process_log_data(spark, input_data, output_data, write_data):
     # read in song data to use for songplays table
     song_df = spark.read.parquet(output_data + "songs_table")
     song_df.show(5)
-    
+
     song_df.createOrReplaceTempView("song_data_table")
-    
-    # extract columns from joined song and log datasets to create songplays table 
+
+    # extract columns from joined song and log datasets to create songplays table
     songplays_table = spark.sql('''
         select
             monotonically_increasing_id() as songplay_id,
@@ -210,8 +209,8 @@ def main():
     #input_data = "./large_data/"
     output_data = "s3a://ma2516-us-west-2/"
     #output_data = "./output/"
-    
-    process_song_data(spark, input_data, output_data, write_data)    
+
+    process_song_data(spark, input_data, output_data, write_data)
     process_log_data(spark, input_data, output_data, write_data)
 
 
