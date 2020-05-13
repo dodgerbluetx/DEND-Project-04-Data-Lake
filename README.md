@@ -1,5 +1,5 @@
 # Data Engineering Nanodegree
-## Project 03 - Data Warehouse
+## Project 04 - Data Lakes
 
 ## Introduction
 
